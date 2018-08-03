@@ -17,13 +17,15 @@
             android:id="@+id/edit_query"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/app_name" />
+            android:hint="@string/app_name"
+            app:leftIcon="@drawable/ic_phone_green_500_24dp" />
 
     </LinearLayout>
 
     <ImageView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_phone_green_500_24dp" />
 
     <EditText
         android:layout_width="match_parent"
