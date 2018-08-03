@@ -3,6 +3,8 @@
 
     <declare-styleable name="SampleEditText">
         <attr name="leftIcon" format="reference" />
+        <attr name="maxLength" format="integer" />
+        <attr name="error" format="boolean" />
     </declare-styleable>
 
 </resources>
