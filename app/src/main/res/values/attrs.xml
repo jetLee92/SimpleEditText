@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <declare-styleable name="SampleEditText">
+    <declare-styleable name="SimpleEditText">
         <attr name="leftIcon" format="reference" />
         <attr name="maxLength" format="integer" />
         <attr name="error" format="boolean" />
+        <attr name="rightClear" format="reference" />
     </declare-styleable>
 
 </resources>

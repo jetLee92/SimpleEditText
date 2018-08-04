@@ -11,17 +11,18 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.v7.widget.AppCompatEditText;
 import android.text.Editable;
-import android.text.Selection;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 /**
  * @author：Jet啟思
  * @date:2018/8/3 10:02
  */
-public class SampleEditText extends AppCompatEditText {
+public class SimpleEditText extends AppCompatEditText {
 
     // hint画笔
     private Paint textPaint;
@@ -50,42 +51,49 @@ public class SampleEditText extends AppCompatEditText {
 
     // 左边图标ID
     private int leftIconId;
-    // 最大text长度
-    private int maxLength = 10;
-    // 是否开启
-    private boolean hasError;
-    private String error;
     private Bitmap leftIconBitmap;
-    private int leftIconSize = (int) Utils.dpToPx(24);
+    // 右边清楚图标ID
+    private int clearIconId;
+    private Bitmap clearBitmap;
+    // 最大text长度
+    public int maxLength;
+    // 是否开启错误提示
+    private boolean hasError;
+    // 错误提示语
+    private String error;
+    private int leftIconSize = (int) Utils.dpToPx(16);
+    private int rightIconSize = (int) Utils.dpToPx(16);
     // 限制字数的TextBounds
     private Rect maxLengthBounds;
     // 提示語Bounds
     private Rect tipsBounds;
 
-    public SampleEditText(Context context) {
+    public SimpleEditText(Context context) {
         super(context);
     }
 
-    public SampleEditText(Context context, AttributeSet attrs) {
+    public SimpleEditText(Context context, AttributeSet attrs) {
         super(context, attrs);
         initAttr(attrs);
         init();
     }
 
-    public SampleEditText(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SimpleEditText(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initAttr(attrs);
         init();
     }
 
     private void initAttr(AttributeSet attrs) {
-        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.SampleEditText);
+        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.SimpleEditText);
         // 获取左边图标的资源ID
-        leftIconId = typedArray.getResourceId(R.styleable.SampleEditText_leftIcon, -1);
+        leftIconId = typedArray.getResourceId(R.styleable.SimpleEditText_leftIcon, -1);
         leftIconBitmap = Utils.getBitmap(getResources(), leftIconSize, leftIconId);
+        clearIconId = typedArray.getResourceId(R.styleable.SimpleEditText_rightClear, -1);
+        clearBitmap = Utils.getBitmap(getResources(), rightIconSize, clearIconId);
         // 获取最大字数限制
-        maxLength = typedArray.getInt(R.styleable.SampleEditText_maxLength, -1);
-        hasError = typedArray.getBoolean(R.styleable.SampleEditText_error, false);
+        maxLength = typedArray.getInt(R.styleable.SimpleEditText_maxLength, -1);
+        hasError = typedArray.getBoolean(R.styleable.SimpleEditText_error, false);
         typedArray.recycle();
     }
 
@@ -100,6 +108,7 @@ public class SampleEditText extends AppCompatEditText {
         lengthPaint.setColor(Color.parseColor("#666666"));
         errorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         errorPaint.setColor(getResources().getColor(R.color.colorAccent));
+        errorPaint.setTextSize(Utils.dpToPx(16));
 
         setBackground(null);
         float leftPadding = 0;
@@ -109,8 +118,7 @@ public class SampleEditText extends AppCompatEditText {
         maxLengthBounds = new Rect();
         tipsBounds = new Rect();
         if (!TextUtils.isEmpty(error)) {
-            linePaint.setTextSize(Utils.dpToPx(16));
-            linePaint.getTextBounds(error, 0, error.length(), tipsBounds);
+            errorPaint.getTextBounds(error, 0, error.length(), tipsBounds);
         }
         maxLengthBounds = tipsBounds;
         if (maxLength != -1) {
@@ -122,8 +130,11 @@ public class SampleEditText extends AppCompatEditText {
                 getPaddingRight(), (int) (getPaddingBottom() + maxLengthBounds.bottom - maxLengthBounds.top + Utils.dpToPx(8)));
         animatorDistance = OFFSET_LABEL + getTextSize();
 
+        // 输入框监听
         setTextChangedListener();
+        // 焦点监听
         setFocusChangeListener();
+        setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxLength)});
     }
 
     @Override
@@ -135,10 +146,18 @@ public class SampleEditText extends AppCompatEditText {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float leftPadding = 0;
+        Log.e("2222", "TextSize:" + getTextSize() + "");
+        Log.e("2222", "leftIconSize:" + clearBitmap.getHeight() + "");
         // 画左边icon
         if (leftIconId != -1 && leftIconBitmap != null) {
-            canvas.drawBitmap(leftIconBitmap, OFFSET_LABEL_LEFT, getPaddingTop(), linePaint);
+            canvas.drawBitmap(leftIconBitmap, OFFSET_LABEL_LEFT,
+                    getPaddingTop() + getTextSize() / 2 - clearBitmap.getHeight() / 2 + Utils.dpToPx(4), linePaint);
             leftPadding = leftIconSize + Utils.dpToPx(6);
+        }
+        // 画右边清楚图标
+        if (clearIconId != -1 && clearBitmap != null) {
+            canvas.drawBitmap(clearBitmap, getWidth() - rightIconSize - Utils.dpToPx(12),
+                    getPaddingTop() + getTextSize() / 2 - rightIconSize/ 2 + Utils.dpToPx(4), linePaint);
         }
         // 画hint
         CharSequence hint = getHint();
@@ -158,8 +177,9 @@ public class SampleEditText extends AppCompatEditText {
         // 画错误提示语
         if (!TextUtils.isEmpty(error)) {
             canvas.drawText(error, 0, error.length(), OFFSET_LABEL_LEFT + leftPadding,
-                    getBottom() - Utils.dpToPx(8), linePaint);
+                    getBottom() - Utils.dpToPx(8), errorPaint);
         }
+
     }
 
     private void setTextChangedListener() {
@@ -170,15 +190,6 @@ public class SampleEditText extends AppCompatEditText {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                Editable editable = getText();
-                if (maxLength != -1 && editable.length() > maxLength) {
-                    String newStr = editable.toString().substring(0, maxLength);//截取新字符串
-                    setText(newStr);
-                    Selection.setSelection(getText(), newStr.length());
-                    error = "字数最长是" + maxLength + "个字";
-                } else {
-                    error = "";
-                }
                 if (maxLength != -1) {
                     String limitText = maxLength + " / " + getEditableText().length();
                     linePaint.setTextSize(Utils.dpToPx(16));
@@ -217,7 +228,7 @@ public class SampleEditText extends AppCompatEditText {
 
     private ObjectAnimator getAnimator() {
         if (objectAnimator == null) {
-            objectAnimator = ObjectAnimator.ofFloat(SampleEditText.this, "labelFraction", 0, 1);
+            objectAnimator = ObjectAnimator.ofFloat(SimpleEditText.this, "labelFraction", 0, 1);
         }
         return objectAnimator;
     }
@@ -229,5 +240,24 @@ public class SampleEditText extends AppCompatEditText {
     public void setLabelFraction(float labelFraction) {
         this.labelFraction = labelFraction;
         invalidate();
+    }
+
+    /**
+     * 设置错误提示
+     *
+     * @param error
+     */
+    public void setError(String error) {
+        this.error = error;
+        invalidate();
+    }
+
+    /**
+     * 获取最大的长度限制
+     *
+     * @return maxLength
+     */
+    public int getMaxLength() {
+        return maxLength;
     }
 }

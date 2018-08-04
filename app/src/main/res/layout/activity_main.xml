@@ -13,13 +13,14 @@
         android:layout_height="wrap_content"
         android:background="#40ff0000">
 
-        <com.jetlee.simpleedittext.SampleEditText
+        <com.jetlee.simpleedittext.SimpleEditText
             android:id="@+id/edit_query"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/app_name"
             app:leftIcon="@drawable/ic_phone_green_500_24dp"
             app:error="true"
+            app:rightClear="@drawable/ic_phone_green_500_24dp"
             app:maxLength="12" />
 
     </LinearLayout>
