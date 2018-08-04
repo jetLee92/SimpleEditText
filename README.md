@@ -1,5 +1,5 @@
 # SimpleEditText
-Material风格的SimpleEditText
+Material风格的SimpleEditText，自定义下划线、左边图标、一键清空、字数限制、错误语提示、hint动画效果。
 
 1、带下划线的简单样式，这是最基本的样式了吧。
 ![带下划线简单样式](https://upload-images.jianshu.io/upload_images/5596129-74c3facc67a114a9.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/720)
