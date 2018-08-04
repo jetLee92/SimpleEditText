@@ -15,20 +15,21 @@ import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 /**
  * @author：Jet啟思
  * @date:2018/8/3 10:02
  */
-public class SimpleEditText extends AppCompatEditText {
+public class SimpleEditText extends AppCompatEditText implements View.OnClickListener {
 
     // hint画笔
     private Paint textPaint;
     // 下划线画笔
     private Paint linePaint;
-    // 长度画笔
+    // 限制长度画笔
     private Paint lengthPaint;
     // 错误语画笔
     private Paint errorPaint;
@@ -38,9 +39,7 @@ public class SimpleEditText extends AppCompatEditText {
     // label与输入框的距离
     private static float OFFSET_LABEL = Utils.dpToPx(8);
     // 左边距
-    private static float OFFSET_LABEL_LEFT = Utils.dpToPx(4);
-    // label底部距离最顶部的距离
-    private static float OFFSET_LABEL_TOP = Utils.dpToPx(0);
+    private static float OFFSET_LABEL_LEFT = Utils.dpToPx(6);
     // label是否显示，根据字数判断
     private boolean isLabelShow;
     // 动画系数
@@ -59,10 +58,15 @@ public class SimpleEditText extends AppCompatEditText {
     public int maxLength;
     // 是否开启错误提示
     private boolean hasError;
+    // 是否有下划线
+    private boolean hasDeadline;
+    int deadlinePadding;
     // 错误提示语
     private String error;
+    // 下划线颜色
+    private int deadlineColor = Color.parseColor("#4CAF50");
     private int leftIconSize = (int) Utils.dpToPx(16);
-    private int rightIconSize = (int) Utils.dpToPx(16);
+    private int rightIconSize = (int) Utils.dpToPx(20);
     // 限制字数的TextBounds
     private Rect maxLengthBounds;
     // 提示語Bounds
@@ -84,8 +88,12 @@ public class SimpleEditText extends AppCompatEditText {
         init();
     }
 
+    // 是否显示顶部的hint
+    private boolean hasTopHint;
+
     private void initAttr(AttributeSet attrs) {
         TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.SimpleEditText);
+        hasTopHint = typedArray.getBoolean(R.styleable.SimpleEditText_hasTopHint, false);
         // 获取左边图标的资源ID
         leftIconId = typedArray.getResourceId(R.styleable.SimpleEditText_leftIcon, -1);
         leftIconBitmap = Utils.getBitmap(getResources(), leftIconSize, leftIconId);
@@ -93,7 +101,8 @@ public class SimpleEditText extends AppCompatEditText {
         clearBitmap = Utils.getBitmap(getResources(), rightIconSize, clearIconId);
         // 获取最大字数限制
         maxLength = typedArray.getInt(R.styleable.SimpleEditText_maxLength, -1);
-        hasError = typedArray.getBoolean(R.styleable.SimpleEditText_error, false);
+//        hasError = typedArray.getBoolean(R.styleable.SimpleEditText_error, false);
+        hasDeadline = typedArray.getBoolean(R.styleable.SimpleEditText_hasDeadline, true);
         typedArray.recycle();
     }
 
@@ -102,7 +111,7 @@ public class SimpleEditText extends AppCompatEditText {
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextSize(hintSize);
         linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        linePaint.setColor(getResources().getColor(R.color.colorAccent));
+        linePaint.setColor(deadlineColor);
         linePaint.setStrokeWidth(Utils.dpToPx(1));
         lengthPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         lengthPaint.setColor(Color.parseColor("#666666"));
@@ -115,6 +124,10 @@ public class SimpleEditText extends AppCompatEditText {
         if (leftIconId != -1 && leftIconBitmap != null) {
             leftPadding = leftIconSize + Utils.dpToPx(6);
         }
+        int rightPadding = 0;
+        if (clearIconId != -1 && clearBitmap != null) {
+            rightPadding = (int) (rightIconSize + Utils.dpToPx(12));
+        }
         maxLengthBounds = new Rect();
         tipsBounds = new Rect();
         if (!TextUtils.isEmpty(error)) {
@@ -122,19 +135,32 @@ public class SimpleEditText extends AppCompatEditText {
         }
         maxLengthBounds = tipsBounds;
         if (maxLength != -1) {
+            setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxLength)});
             String limitText = maxLength + " / " + getEditableText().length();
             lengthPaint.setTextSize(Utils.dpToPx(16));
             lengthPaint.getTextBounds(limitText, 0, limitText.length(), maxLengthBounds);
         }
-        setPadding((int) (OFFSET_LABEL_LEFT + leftPadding), (int) (getPaddingTop() + OFFSET_LABEL + hintSize + OFFSET_LABEL_TOP),
-                getPaddingRight(), (int) (getPaddingBottom() + maxLengthBounds.bottom - maxLengthBounds.top + Utils.dpToPx(8)));
+        if (!hasTopHint) {
+            OFFSET_LABEL = 0;
+            hintSize = 0;
+        } else {
+            OFFSET_LABEL = Utils.dpToPx(8);
+            hintSize = Utils.dpToPx(14);
+        }
+        deadlinePadding = 0;
+        if (hasDeadline) {
+            deadlinePadding = (int) Utils.dpToPx(8);
+        }
+        if (!hasDeadline && !TextUtils.isEmpty(error)) {
+            deadlinePadding = (int) Utils.dpToPx(4);
+        }
+        setPadding((int) (OFFSET_LABEL_LEFT + leftPadding), (int) (getPaddingTop() + OFFSET_LABEL + hintSize),
+                getPaddingRight() + rightPadding, (int) (getPaddingBottom() + maxLengthBounds.bottom - maxLengthBounds.top + deadlinePadding));
         animatorDistance = OFFSET_LABEL + getTextSize();
-
         // 输入框监听
         setTextChangedListener();
         // 焦点监听
         setFocusChangeListener();
-        setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxLength)});
     }
 
     @Override
@@ -146,38 +172,45 @@ public class SimpleEditText extends AppCompatEditText {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float leftPadding = 0;
-        Log.e("2222", "TextSize:" + getTextSize() + "");
-        Log.e("2222", "leftIconSize:" + clearBitmap.getHeight() + "");
+//        Log.e("2222", "TextSize:" + getTextSize() + "");
         // 画左边icon
         if (leftIconId != -1 && leftIconBitmap != null) {
             canvas.drawBitmap(leftIconBitmap, OFFSET_LABEL_LEFT,
-                    getPaddingTop() + getTextSize() / 2 - clearBitmap.getHeight() / 2 + Utils.dpToPx(4), linePaint);
+                    getPaddingTop() + Utils.dpToPx(2) + getLineHeight() * getLineCount() / 2 - leftIconBitmap.getHeight() / 2, linePaint);
             leftPadding = leftIconSize + Utils.dpToPx(6);
         }
         // 画右边清楚图标
         if (clearIconId != -1 && clearBitmap != null) {
             canvas.drawBitmap(clearBitmap, getWidth() - rightIconSize - Utils.dpToPx(12),
-                    getPaddingTop() + getTextSize() / 2 - rightIconSize/ 2 + Utils.dpToPx(4), linePaint);
+                    getPaddingTop() + Utils.dpToPx(2) + getLineHeight() * getLineCount() / 2 - rightIconSize / 2, linePaint);
         }
         // 画hint
-        CharSequence hint = getHint();
-        textPaint.setAlpha((int) (labelFraction * 0xff));
-        canvas.drawText(hint, 0, hint.length(), OFFSET_LABEL_LEFT + leftPadding,
-                getPaddingTop() - OFFSET_LABEL + (1 - labelFraction) * animatorDistance, textPaint);
+        if (hasTopHint) {
+            CharSequence hint = getHint();
+            textPaint.setAlpha((int) (labelFraction * 0xff));
+            canvas.drawText(hint, 0, hint.length(), OFFSET_LABEL_LEFT + leftPadding,
+                    getPaddingTop() - OFFSET_LABEL + (1 - labelFraction) * animatorDistance, textPaint);
+        }
         // 画下划线
-        canvas.drawLine(OFFSET_LABEL_LEFT + leftPadding, getBottom() - Utils.dpToPx(8) - Utils.dpToPx(8) - (maxLengthBounds.bottom - maxLengthBounds.top),
-                getWidth() - getPaddingRight(), getBottom() - Utils.dpToPx(8) - Utils.dpToPx(8) - (maxLengthBounds.bottom - maxLengthBounds.top), linePaint);
+        if (hasDeadline) {
+            canvas.drawLine(OFFSET_LABEL_LEFT + leftPadding, getBottom() - Utils.dpToPx(8) - Utils.dpToPx(8) - (maxLengthBounds.bottom - maxLengthBounds.top),
+                    getWidth() - Utils.dpToPx(4), getBottom() - Utils.dpToPx(8) - Utils.dpToPx(8) - (maxLengthBounds.bottom - maxLengthBounds.top), linePaint);
+        }
         // 画text长度限制
         String limitText = maxLength + " / " + getEditableText().length();
         if (maxLength != -1) {
             canvas.drawText(limitText,
-                    getWidth() - getPaddingRight() - (maxLengthBounds.right - maxLengthBounds.left) - Utils.dpToPx(4),
+                    getWidth() - Utils.dpToPx(4) - (maxLengthBounds.right - maxLengthBounds.left) - Utils.dpToPx(4),
                     getBottom() - Utils.dpToPx(8), lengthPaint);
         }
         // 画错误提示语
         if (!TextUtils.isEmpty(error)) {
+            int errorPadding = (int) Utils.dpToPx(8);
+            if (!hasDeadline) {
+//                errorPadding = errorPadding - (int) Utils.dpToPx();
+            }
             canvas.drawText(error, 0, error.length(), OFFSET_LABEL_LEFT + leftPadding,
-                    getBottom() - Utils.dpToPx(8), errorPaint);
+                    getBottom() - errorPadding, errorPaint);
         }
 
     }
@@ -202,10 +235,14 @@ public class SimpleEditText extends AppCompatEditText {
             public void afterTextChanged(Editable s) {
                 if (s.length() > 0 && !isLabelShow) {  // 只在第一次显示的时候做动画
                     isLabelShow = true;
-                    getAnimator().start();
+                    if (hasTopHint) {
+                        getAnimator().start();
+                    }
                 } else if (s.length() == 0) {
                     isLabelShow = false;
-                    getAnimator().reverse();
+                    if (hasTopHint) {
+                        getAnimator().reverse();
+                    }
                 }
             }
         });
@@ -216,7 +253,7 @@ public class SimpleEditText extends AppCompatEditText {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    linePaint.setColor(getResources().getColor(R.color.colorAccent));
+                    linePaint.setColor(deadlineColor);
                     linePaint.setStrokeWidth(Utils.dpToPx(2));
                 } else {
                     linePaint.setColor(Color.parseColor("#666666"));
@@ -259,5 +296,27 @@ public class SimpleEditText extends AppCompatEditText {
      */
     public int getMaxLength() {
         return maxLength;
+    }
+
+    @Override
+    public void onClick(View v) {
+        setText("");
+        Toast.makeText(getContext(), "keyi", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_UP:
+                float x = event.getX();
+                float y = event.getY();
+                if (clearIconId != -1 && clearBitmap != null) {
+                    if ((getWidth() - getPaddingRight() < x && x < getWidth())) {
+                        onClick(this);
+                    }
+                }
+                break;
+        }
+        return super.onTouchEvent(event);
     }
 }

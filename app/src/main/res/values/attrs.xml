@@ -2,10 +2,11 @@
 <resources>
 
     <declare-styleable name="SimpleEditText">
+        <attr name="hasTopHint" format="boolean" />
         <attr name="leftIcon" format="reference" />
         <attr name="maxLength" format="integer" />
-        <attr name="error" format="boolean" />
         <attr name="rightClear" format="reference" />
+        <attr name="hasDeadline" format="boolean" />
     </declare-styleable>
 
 </resources>

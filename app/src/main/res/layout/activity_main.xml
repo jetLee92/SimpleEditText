@@ -10,29 +10,17 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#40ff0000">
+        android:layout_height="wrap_content">
 
         <com.jetlee.simpleedittext.SimpleEditText
             android:id="@+id/edit_query"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/app_name"
+            app:hasTopHint="true"
             app:leftIcon="@drawable/ic_phone_green_500_24dp"
-            app:error="true"
-            app:rightClear="@drawable/ic_phone_green_500_24dp"
-            app:maxLength="12" />
+            app:maxLength="20" />
 
     </LinearLayout>
-
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_phone_green_500_24dp" />
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/app_name" />
 
 </LinearLayout>
