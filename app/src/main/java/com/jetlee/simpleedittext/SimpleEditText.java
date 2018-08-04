@@ -40,6 +40,9 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
     private static float OFFSET_LABEL = Utils.dpToPx(8);
     // 左边距
     private static float OFFSET_LABEL_LEFT = Utils.dpToPx(6);
+    private int defaultColor = Color.parseColor("#666666");
+    private int leftIconSize = (int) Utils.dpToPx(16);
+    private int rightIconSize = (int) Utils.dpToPx(20);
     // label是否显示，根据字数判断
     private boolean isLabelShow;
     // 动画系数
@@ -73,9 +76,9 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
     // 错误提示语
     private String error = "请输入正确的手机号码";
     // 下划线颜色
-    private int defaultColor = Color.parseColor("#666666");
-    private int leftIconSize = (int) Utils.dpToPx(16);
-    private int rightIconSize = (int) Utils.dpToPx(20);
+
+    private boolean isClear;
+    private boolean isHasText;
     // 限制字数的TextBounds
     private Rect maxLengthBounds;
 
@@ -184,7 +187,6 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float leftPadding = 0;
-//        Log.e("2222", "TextSize:" + getTextSize() + "");
         // 画左边icon
         if (leftIconId != -1 && leftIconBitmap != null) {
             canvas.drawBitmap(leftIconBitmap, OFFSET_LABEL_LEFT,
@@ -218,9 +220,6 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
         // 画错误提示语
         if (!TextUtils.isEmpty(error)) {
             int errorPadding = (int) Utils.dpToPx(8);
-            if (!hasDeadline) {
-//                errorPadding = errorPadding - (int) Utils.dpToPx();
-            }
             canvas.drawText(error, 0, error.length(), OFFSET_LABEL_LEFT + leftPadding,
                     getBottom() - errorPadding, errorPaint);
         }
@@ -231,6 +230,7 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
         addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                isHasText = s.length() > 0;
             }
 
             @Override
@@ -250,12 +250,14 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
                     if (hasTopHint) {
                         getAnimator().start();
                     }
-                } else if (s.length() == 0) {
+                } else if (s.length() == 0 && !isClear || (s.length() == 0 && isHasText)) {
                     isLabelShow = false;
                     if (hasTopHint) {
                         getAnimator().reverse();
                     }
                 }
+                isHasText = false;
+                isClear = false;
             }
         });
     }
@@ -312,8 +314,9 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
 
     @Override
     public void onClick(View v) {
+        isClear = true;
         setText("");
-        Toast.makeText(getContext(), "keyi", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "输入框已清空", Toast.LENGTH_SHORT).show();
     }
 
     @Override
