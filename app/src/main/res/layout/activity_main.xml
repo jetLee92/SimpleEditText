@@ -17,9 +17,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/app_name"
+            app:deadlineColor="#FFEB3B"
+            app:errorColor="#8E24AA"
             app:hasTopHint="true"
+            app:hintColor="#1976D2"
             app:leftIcon="@drawable/ic_phone_green_500_24dp"
-            app:maxLength="20" />
+            app:lengthColor="#F50057"
+            app:maxLength="20"
+            app:rightClear="@drawable/ic_highlight_off_grey_700_24dp" />
 
     </LinearLayout>
 

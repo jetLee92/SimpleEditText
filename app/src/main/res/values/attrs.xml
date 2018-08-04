@@ -7,6 +7,10 @@
         <attr name="maxLength" format="integer" />
         <attr name="rightClear" format="reference" />
         <attr name="hasDeadline" format="boolean" />
+        <attr name="deadlineColor" format="color" />
+        <attr name="hintColor" format="color" />
+        <attr name="errorColor" format="color" />
+        <attr name="lengthColor" format="color" />
     </declare-styleable>
 
 </resources>

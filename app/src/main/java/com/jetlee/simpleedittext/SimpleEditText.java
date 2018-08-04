@@ -48,6 +48,7 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
     // hint动画的距离
     private float animatorDistance = OFFSET_LABEL + hintSize;
 
+    /************* 自定义的style *****************/
     // 左边图标ID
     private int leftIconId;
     private Bitmap leftIconBitmap;
@@ -60,17 +61,23 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
     private boolean hasError;
     // 是否有下划线
     private boolean hasDeadline;
+    // hint颜色
+    private int hintColor;
+    // 错误语颜色
+    private int errorColor;
+    // 字数限制颜色
+    private int lengthColor;
+    // 下划线颜色
+    private int deadlineColor;
     int deadlinePadding;
     // 错误提示语
-    private String error;
+    private String error = "请输入正确的手机号码";
     // 下划线颜色
-    private int deadlineColor = Color.parseColor("#4CAF50");
+    private int defaultColor = Color.parseColor("#666666");
     private int leftIconSize = (int) Utils.dpToPx(16);
     private int rightIconSize = (int) Utils.dpToPx(20);
     // 限制字数的TextBounds
     private Rect maxLengthBounds;
-    // 提示語Bounds
-    private Rect tipsBounds;
 
     public SimpleEditText(Context context) {
         super(context);
@@ -103,6 +110,10 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
         maxLength = typedArray.getInt(R.styleable.SimpleEditText_maxLength, -1);
 //        hasError = typedArray.getBoolean(R.styleable.SimpleEditText_error, false);
         hasDeadline = typedArray.getBoolean(R.styleable.SimpleEditText_hasDeadline, true);
+        deadlineColor = typedArray.getColor(R.styleable.SimpleEditText_deadlineColor, getResources().getColor(R.color.colorAccent));
+        hintColor = typedArray.getColor(R.styleable.SimpleEditText_hintColor, defaultColor);
+        errorColor = typedArray.getColor(R.styleable.SimpleEditText_errorColor, getResources().getColor(R.color.colorAccent));
+        lengthColor = typedArray.getColor(R.styleable.SimpleEditText_lengthColor, defaultColor);
         typedArray.recycle();
     }
 
@@ -110,13 +121,14 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
     private void init() {
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextSize(hintSize);
+        textPaint.setColor(hintColor);
         linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         linePaint.setColor(deadlineColor);
         linePaint.setStrokeWidth(Utils.dpToPx(1));
         lengthPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        lengthPaint.setColor(Color.parseColor("#666666"));
+        lengthPaint.setColor(lengthColor);
         errorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        errorPaint.setColor(getResources().getColor(R.color.colorAccent));
+        errorPaint.setColor(errorColor);
         errorPaint.setTextSize(Utils.dpToPx(16));
 
         setBackground(null);
@@ -129,7 +141,7 @@ public class SimpleEditText extends AppCompatEditText implements View.OnClickLis
             rightPadding = (int) (rightIconSize + Utils.dpToPx(12));
         }
         maxLengthBounds = new Rect();
-        tipsBounds = new Rect();
+        Rect tipsBounds = new Rect();
         if (!TextUtils.isEmpty(error)) {
             errorPaint.getTextBounds(error, 0, error.length(), tipsBounds);
         }
